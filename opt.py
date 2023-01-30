@@ -21,11 +21,13 @@ def time_of_work(func):
 class DataMatrix:
 
     def __init__(self):
-        self.__data_file_csv = "little_data.csv"
+        self.__data_file_csv = "Circle_coord.csv"
         self.__data = None
         self.count_of_data = None
         self.__distance_matrix = None
+        self.available_data_distance_matrix = None
         self.available_data = None
+        self.distance_matrix_shape = None
 
     def read_file(self):
         self.__data = np.genfromtxt(self.__data_file_csv, delimiter=",")
@@ -49,6 +51,8 @@ class DataMatrix:
         dy = y[..., np.newaxis] - y[np.newaxis, ...]
         d = np.array([dx, dy])
         self.__distance_matrix = (d ** 2).sum(axis=0) ** 0.5
+        self.distance_matrix_shape = self.__distance_matrix.shape
+        self.available_data_distance_matrix = self.__distance_matrix
         # print(self.__distance_matrix)
 
     def get_inverse_distance(self, first_point, second_point):
@@ -70,14 +74,15 @@ class DataMatrix:
         return p_length
 
 
-class ACO:
+class ACO(DataMatrix):
 
     def __init__(self):
-        # super().__init__()
+        super().__init__()
+        self.data_matrices = DataMatrix()
         # =========================================[MATRICES]===========================================================
-        self.__data_file_csv = "DATA_SOURCE.csv"
-        self.__data = None
-        self.__distance_matrix = None
+        # self.__data_file_csv = "DATA_SOURCE.csv"
+        # self.__data = None
+        # self.__distance_matrix = None
         self.__pheromone_matrix = None
         self.__ant_path_matrix = None
         self.__probability_matrix = None
@@ -111,61 +116,21 @@ class ACO:
                                                                                  self.evaporation_coefficient)
 
     @time_of_work
-    def __read_file(self):
-        self.__data = np.genfromtxt(self.__data_file_csv, delimiter=",")
-
-    def read_parameters_file(self, parameters_file_json):
-        with open(parameters_file_json, "r") as read_file:
-            data = json.load(read_file)
-        self.ant_count = data["ACO_parameters"][0]["ant_count"]
-        self.generations_count = data["ACO_parameters"][0]["generations_count"]
-        self.alfa = data["ACO_parameters"][0]["alfa"]
-        self.beta = data["ACO_parameters"][0]["beta"]
-        self.initial_pheromone = data["ACO_parameters"][0]["initial_pheromone"]
-        self.pheromone_quantity = data["ACO_parameters"][0]["pheromone_quantity"]
-        self.evaporation_coefficient = data["ACO_parameters"][0]["evaporation_coefficient"]
-        self.__data_file_csv = data["ACO_parameters"][0]["__data_file_csv"]
-        read_file.close()
-
-    @time_of_work
-    def print_data_file(self):
-        print(self.__data)
-
-    @time_of_work
-    def __preprocess_data(self):
-        self.__data = np.delete(self.__data, 0, axis=0)
-
-    @time_of_work
-    def __init_distance_matrix(self):
-        self.__read_file()
-        self.__preprocess_data()
-        x = np.array(self.__data[:, 1])
-        y = np.array(self.__data[:, 2])
-        dx = x[..., np.newaxis] - x[np.newaxis, ...]
-        dy = y[..., np.newaxis] - y[np.newaxis, ...]
-        d = np.array([dx, dy])
-        self.__distance_matrix = (d ** 2).sum(axis=0) ** 0.5
-
-    def get_inverse_distance(self, first_point, second_point):
-        if first_point == second_point:
-            return 0
-        else:
-            return 1 / self.__distance_matrix[first_point, second_point]
-
-    @time_of_work
     def __init_pheromone_matrix(self):
-        self.__pheromone_matrix = np.full(self.__distance_matrix.shape, self.initial_pheromone, dtype=float)
+        self.__pheromone_matrix = np.full(self.data_matrices.distance_matrix_shape, self.initial_pheromone, dtype=float)
 
     def get_pheromone_value(self, current_position, perspective_position):
         return self.__pheromone_matrix[current_position, perspective_position]
 
     def __init_probability_matrix(self):
-        self.__probability_matrix = self.__pheromone_matrix * np.divide(1, self.__distance_matrix,
-                                                                        out=np.zeros_like(self.__distance_matrix),
-                                                                        where=self.__distance_matrix != 0)
+        self.__probability_matrix = self.__pheromone_matrix * np.divide(1,
+                                                                        self.data_matrices.available_data_distance_matrix,
+                                                                        out=np.zeros_like(
+                                                                            self.data_matrices.available_data_distance_matrix),
+                                                                        where=self.data_matrices.available_data_distance_matrix != 0)
 
     def __init_ant_path_matrix(self):
-        self.__ant_path_matrix = np.zeros(shape=(self.ant_count, self.__data.shape[0]))
+        self.__ant_path_matrix = np.zeros(shape=(self.ant_count, self.data_matrices.count_of_data))
 
     def __get_new_point(self, current_point):
         a = self.__probability_matrix[current_point]
@@ -181,7 +146,7 @@ class ACO:
         self.__ant_path_matrix[ant_number, iteration + 1] = point
 
     def __set_random_point(self, ant_number):
-        self.__ant_path_matrix[ant_number, 0] = random.randint(0, self.__data.shape[0] - 1)
+        self.__ant_path_matrix[ant_number, 0] = random.randint(0, self.data_matrices.count_of_data - 1)
 
     def __fill_ant_path_matrix(self):
         for ant in range(self.ant_count):
@@ -189,7 +154,7 @@ class ACO:
             self.__init_probability_matrix()
             # print(self.__probability_matrix)
             # print("===========================================================")
-            for iteration in range(0, self.__data.shape[0] - 1):
+            for iteration in range(0, self.data_matrices.count_of_data - 1):
                 # print("_______________________________________________")
                 # print("[Iteration]:", iteration)
                 current_point = int(self.__ant_path_matrix[ant, iteration])
@@ -202,12 +167,14 @@ class ACO:
     def __get_path_length(self, ant_number):
         p_length = 0
         for i in range(int(self.__ant_path_matrix.shape[1]) - 1):
-            p_length = p_length + float(self.__distance_matrix[int(self.__ant_path_matrix[ant_number, i]),
-                                                               int(self.__ant_path_matrix[ant_number, i + 1])])
+            p_length += self.data_matrices.get_distance(int(self.__ant_path_matrix[ant_number, i]),
+                                                        int(self.__ant_path_matrix[ant_number, i + 1]))
 
-        p_length += float(self.__distance_matrix[int(self.__ant_path_matrix[ant_number, 0]),
-                                                 int(self.__ant_path_matrix[ant_number,
-                                                                            int(self.__ant_path_matrix.shape[1]) - 1])])
+        p_length += self.data_matrices.get_distance(int(self.__ant_path_matrix[ant_number, 0]),
+                                                    int(self.__ant_path_matrix[ant_number,
+                                                                               int(self.__ant_path_matrix.shape[
+                                                                                       1]) - 1]))
+
         return p_length
 
     def __get_best(self):
@@ -241,10 +208,10 @@ class ACO:
         x = []
         y = []
         for i in range(len(self.__best_order)):
-            x.append(self.__data[int(self.__best_order[i]), 1])
-            y.append(self.__data[int(self.__best_order[i]), 2])
-            plt.plot(self.__data[int(self.__best_order[i]), 1],
-                     self.__data[int(self.__best_order[i]), 2], marker='D')
+            x.append(self.data_matrices.available_data[int(self.__best_order[i]), 1])
+            y.append(self.data_matrices.available_data[int(self.__best_order[i]), 2])
+            plt.plot(self.data_matrices.available_data[int(self.__best_order[i]), 1],
+                     self.data_matrices.available_data[int(self.__best_order[i]), 2], marker='D')
             plt.annotate(str(int(self.__best_order[i])), xy=(x[i], y[i]), xytext=(x[i] + 0.5, y[i] + 0.5), size=8)
         plt.plot(x, y, linewidth=0.5)
         # plt.show(block=False)
@@ -257,7 +224,7 @@ class ACO:
     def solve(self):
         st = time.time()
 
-        self.__init_distance_matrix()
+        self.data_matrices.init_distance_matrix()
         self.__init_pheromone_matrix()
 
         for gen in range(self.generations_count):
