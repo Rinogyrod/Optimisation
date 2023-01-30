@@ -53,7 +53,6 @@ class DataMatrix:
         self.__distance_matrix = (d ** 2).sum(axis=0) ** 0.5
         self.distance_matrix_shape = self.__distance_matrix.shape
         self.available_data_distance_matrix = self.__distance_matrix
-        # print(self.__distance_matrix)
 
     def get_inverse_distance(self, first_point, second_point):
         if first_point == second_point:
@@ -72,6 +71,9 @@ class DataMatrix:
         for i in range(len(path_list) - 1):
             p_length = p_length + self.get_distance(path_list[i], path_list[i + 1])
         return p_length
+
+    def set_reading_file(self, file_name):
+        self.__data_file_csv = file_name
 
 
 class ACO(DataMatrix):
@@ -114,6 +116,20 @@ class ACO(DataMatrix):
                                                                                  self.beta, self.initial_pheromone,
                                                                                  self.pheromone_quantity,
                                                                                  self.evaporation_coefficient)
+
+    def read_parameters_file(self, parameters_file_json):
+        with open(parameters_file_json, "r") as read_file:
+            data = json.load(read_file)
+        self.ant_count = data["ACO_parameters"][0]["ant_count"]
+        self.generations_count = data["ACO_parameters"][0]["generations_count"]
+        self.alfa = data["ACO_parameters"][0]["alfa"]
+        self.beta = data["ACO_parameters"][0]["beta"]
+        self.initial_pheromone = data["ACO_parameters"][0]["initial_pheromone"]
+        self.pheromone_quantity = data["ACO_parameters"][0]["pheromone_quantity"]
+        self.evaporation_coefficient = data["ACO_parameters"][0]["evaporation_coefficient"]
+        self.data_matrices.set_reading_file(data["ACO_parameters"][0]["__data_file_csv"])
+        # self.__data_file_csv = data["ACO_parameters"][0]["__data_file_csv"]
+        read_file.close()
 
     @time_of_work
     def __init_pheromone_matrix(self):
@@ -261,7 +277,8 @@ class SA(DataMatrix):
             data = json.load(read_file)
         self.initial_temperature = data["SA_parameters"][0]["initial_temperature"]
         self.final_temperature = data["SA_parameters"][0]["final_temperature"]
-        self.data_matrices.__data_file_csv = data["SA_parameters"][0]["__data_file_csv"]
+        # data_matrices.__data_file_csv = data["SA_parameters"][0]["__data_file_csv"]
+        self.data_matrices.set_reading_file(data["SA_parameters"][0]["__data_file_csv"])
         read_file.close()
 
     @staticmethod
