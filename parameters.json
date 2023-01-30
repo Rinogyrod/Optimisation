@@ -12,8 +12,9 @@
   ],
   "SA_parameters": [{
     "__data_file_csv" : "little_data.csv",
-    "initial_temperature": 10000,
-    "final_temperature" : 0.00001
+    "initial_temperature": 100,
+    "final_temperature" : 0.000001,
+    "limit_of_iterations" : 500000
   }
   ]
 }

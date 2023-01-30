@@ -69,7 +69,8 @@ class DataMatrix:
     def get_path_length(self, path_list):
         p_length = 0
         for i in range(len(path_list) - 1):
-            p_length = p_length + self.get_distance(path_list[i], path_list[i + 1])
+            p_length += self.get_distance(path_list[i], path_list[i + 1])
+        p_length += self.get_distance(path_list[0], path_list[len(path_list) - 1])
         return p_length
 
     def set_reading_file(self, file_name):
@@ -277,6 +278,7 @@ class SA(DataMatrix):
             data = json.load(read_file)
         self.initial_temperature = data["SA_parameters"][0]["initial_temperature"]
         self.final_temperature = data["SA_parameters"][0]["final_temperature"]
+        self.limit_of_iterations = data["SA_parameters"][0]["limit_of_iterations"]
         # data_matrices.__data_file_csv = data["SA_parameters"][0]["__data_file_csv"]
         self.data_matrices.set_reading_file(data["SA_parameters"][0]["__data_file_csv"])
         read_file.close()
@@ -292,15 +294,19 @@ class SA(DataMatrix):
     def __random_permutation(self):
         i = random.randint(0, self.data_matrices.count_of_data - 1)
         j = random.randint(0, self.data_matrices.count_of_data - 1)
+        tem = self.current_sequence[i].copy()
+        self.current_sequence[i] = self.current_sequence[j]
+        self.current_sequence[j] = tem
+        """
         if i > j:
             self.current_sequence[j:i] = np.flipud(self.current_sequence[j:i])
         else:
             self.current_sequence[i:j] = np.flipud(self.current_sequence[i:j])
+        """
 
-    @staticmethod
-    def decrease_temperature(initial_temperature, iteration):
+    def decrease_temperature(self, iteration):
         if iteration != 0:
-            return initial_temperature * 0.1 / iteration
+            return self.initial_temperature * 0.1 / iteration
         else:
             pass
 
@@ -330,34 +336,37 @@ class SA(DataMatrix):
     def solve(self):
         self.data_matrices.init_distance_matrix()
         self.__generate_initial_sequence()
-        self.best_sequence = self.current_sequence
+        self.best_sequence = self.current_sequence.copy()
 
         iteration = 1
-        # print("[Current temperature]: ", self.current_temperature)
 
         start = time.time()
         current_temp = self.initial_temperature
-
+        
         while current_temp > self.final_temperature:
+            
             self.__random_permutation()
+            
             delta_energy = self.data_matrices.get_path_length(self.current_sequence) - \
                            self.data_matrices.get_path_length(self.best_sequence)
             if delta_energy <= 0:
-                self.best_sequence = self.current_sequence
+                self.best_sequence = self.current_sequence.copy()
             else:
                 if self.__is_transition(self.get_probability_of_permutation(delta_energy, current_temp)):
-                    self.best_sequence = self.current_sequence
+                    self.best_sequence = self.current_sequence.copy()
 
-            current_temp = self.decrease_temperature(self.initial_temperature, iteration)
+            current_temp = self.decrease_temperature(iteration)
 
             iteration += 1
-
             if iteration > self.limit_of_iterations:
                 break
+
         end = time.time()
+        
 
         print("__________________________________________________________________________________________")
         print("[Count of iterations]:", iteration)
         print("[Total time]: ", end - start)
         print("[Best path length]:", self.data_matrices.get_path_length(self.best_sequence))
         print("[Best order]:", self.best_sequence)
+
