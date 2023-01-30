@@ -1,0 +1,19 @@
+{
+  "ACO_parameters": [{
+    "__data_file_csv" : "DATA_SOURCE.csv",
+    "ant_count" : 30,
+    "generations_count" : 100,
+    "alfa" : 3,
+    "beta" : 2,
+    "initial_pheromone": 0.1,
+    "pheromone_quantity": 1,
+    "evaporation_coefficient": 0.1
+  }
+  ],
+  "SA_parameters": [{
+    "__data_file_csv" : "DATA_SOURCE.csv",
+    "initial_temperature": 10000,
+    "final_temperature" : 0.00001
+  }
+  ]
+}
