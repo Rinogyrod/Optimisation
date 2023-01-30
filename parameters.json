@@ -1,6 +1,6 @@
 {
   "ACO_parameters": [{
-    "__data_file_csv" : "DATA_SOURCE.csv",
+    "__data_file_csv" : "Data/little_data.csv",
     "ant_count" : 30,
     "generations_count" : 1000,
     "alfa" : 3,
@@ -11,7 +11,7 @@
   }
   ],
   "SA_parameters": [{
-    "__data_file_csv" : "little_data.csv",
+    "__data_file_csv" : "Data/little_data.csv",
     "initial_temperature": 100,
     "final_temperature" : 0.000001,
     "limit_of_iterations" : 500000

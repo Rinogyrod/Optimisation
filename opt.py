@@ -21,7 +21,7 @@ def time_of_work(func):
 class DataMatrix:
 
     def __init__(self):
-        self.__data_file_csv = "Circle_coord.csv"
+        self.__data_file_csv = "Data/Circle_coord.csv"
         self.__data = None
         self.count_of_data = None
         self.__distance_matrix = None
@@ -362,7 +362,6 @@ class SA(DataMatrix):
                 break
 
         end = time.time()
-        
 
         print("__________________________________________________________________________________________")
         print("[Count of iterations]:", iteration)
