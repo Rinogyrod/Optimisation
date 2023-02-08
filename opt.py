@@ -77,10 +77,9 @@ class DataMatrix:
         self.__data_file_csv = file_name
 
 
-class ACO(DataMatrix):
+class ACO:
 
     def __init__(self):
-        super().__init__()
         self.data_matrices = DataMatrix()
         # =========================================[MATRICES]===========================================================
         # self.__data_file_csv = "DATA_SOURCE.csv"
