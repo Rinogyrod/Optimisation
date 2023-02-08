@@ -255,10 +255,9 @@ class ACO:
         print("[Best order]:", self.__best_order)
 
 
-class SA(DataMatrix):
+class SA:
 
     def __init__(self):
-        super().__init__()
         self.data_matrices = DataMatrix()
         # ==========================================[SA_SETTINGS]=======================================================
         self.initial_temperature = 10
