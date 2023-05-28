@@ -283,28 +283,41 @@ class SA:
 
     @staticmethod
     def get_probability_of_permutation(delta_energy, temperature):
-        probability = math.exp(- delta_energy / temperature)
-        return probability
+        if delta_energy <= 0:
+            return 1
+        else:
+            probability = math.exp(-delta_energy / temperature)
+            return probability
 
     def __generate_initial_sequence(self):
         self.current_sequence = np.random.permutation(self.data_matrices.count_of_data)
 
     def __random_permutation(self):
-        i = random.randint(0, self.data_matrices.count_of_data - 1)
-        j = random.randint(0, self.data_matrices.count_of_data - 1)
-        tem = self.current_sequence[i].copy()
-        self.current_sequence[i] = self.current_sequence[j]
-        self.current_sequence[j] = tem
+        for _ in range(5):
+            i = random.randint(0, self.data_matrices.count_of_data - 1)
+            j = random.randint(0, self.data_matrices.count_of_data - 1)
+            tem = self.current_sequence[i].copy()
+            self.current_sequence[i] = self.current_sequence[j].copy()
+            self.current_sequence[j] = tem
         """
-        if i > j:
-            self.current_sequence[j:i] = np.flipud(self.current_sequence[j:i])
-        else:
-            self.current_sequence[i:j] = np.flipud(self.current_sequence[i:j])
+        for _ in range(5):
+            i = random.randint(0, self.data_matrices.count_of_data - 1)
+            j = random.randint(0, self.data_matrices.count_of_data - 1)
+            if i > j:
+                self.current_sequence[j:i] = np.flipud(self.current_sequence[j:i])
+            else:
+                self.current_sequence[i:j] = np.flipud(self.current_sequence[i:j])
         """
 
     def decrease_temperature(self, iteration):
         if iteration != 0:
             return self.initial_temperature * 0.1 / iteration
+            # Больцмановский отжиг
+            # return self.initial_temperature / (math.log(1 + iteration))
+            # Быстрый отжиг/ Отжиг Коши
+            # return self.initial_temperature / iteration ** (1 / len(self.current_sequence))
+            #
+            # return self.initial_temperature * 0.5
         else:
             pass
 
